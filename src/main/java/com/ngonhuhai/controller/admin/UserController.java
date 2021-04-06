@@ -1,0 +1,81 @@
+package com.ngonhuhai.controller.admin;
+
+import java.io.IOException;
+
+import javax.inject.Inject;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.ngonhuhai.constant.SystemConstant;
+import com.ngonhuhai.model.RoleModel;
+import com.ngonhuhai.model.UserModel;
+import com.ngonhuhai.service.iRoleService;
+import com.ngonhuhai.service.iUserService;
+import com.ngonhuhai.service.impl.RoleService;
+import com.ngonhuhai.service.impl.UserService;
+import com.ngonhuhai.utils.FormUtil;
+import com.ngonhuhai.utils.MessageUtil;
+
+@WebServlet(urlPatterns = { "/admin-userlist" })
+public class UserController extends HttpServlet {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1448682093369612638L;
+
+	private iUserService userService=new UserService();
+
+
+	private iRoleService roleService =new RoleService();
+
+	@Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		String type=req.getParameter("type");
+		UserModel model= new UserModel();
+		String view="";
+		
+		String id=req.getParameter("id");
+
+		if (type!=null&&type.equals(SystemConstant.LIST)) {
+			String pagestr = req.getParameter("page");
+			String maxpageitemstr = req.getParameter("maxPageItem");
+			if (pagestr != null) {
+				model.setPage(Integer.parseInt(pagestr));
+			}
+			if (maxpageitemstr != null) {
+				model.setMaxPageItem(Integer.parseInt(maxpageitemstr));
+			}
+			Integer offset = (model.getPage() - 1) * model.getMaxPageItem();
+			model.setListResult(userService.findAll(offset, model.getMaxPageItem()));
+			model.setTotalItem(userService.getTotalItem());
+			model.setTotalPage((int) Math.ceil((double) model.getTotalItem() / model.getMaxPageItem()));
+			req.setAttribute(SystemConstant.MODEL, model);
+			view="/views/admin/user/list.jsp";
+		}else if(type!=null&type.equals(SystemConstant.EDIT)) {
+			if(id!=null) {
+				model=userService.findOne(Long.parseLong(id));
+			}
+			
+			req.setAttribute("roles", roleService.findAll());
+			view="/views/admin/user/edit.jsp";
+		}
+		MessageUtil.showMessage(req);
+		req.setAttribute(SystemConstant.MODEL, model);
+		RequestDispatcher rd = req.getRequestDispatcher(view);
+		rd.forward(req, resp);
+		
+	}
+
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		
+
+	}
+}
